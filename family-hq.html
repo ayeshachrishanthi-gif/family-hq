@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Family HQ">
+<title>Family HQ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: Georgia, serif; background: linear-gradient(135deg, #fdf6ec, #fef9f3, #f9f0e8); min-height: 100vh; min-height: -webkit-fill-available; overscroll-behavior: none; }
+  button { cursor: pointer; font-family: inherit; }
+  input, textarea { font-family: Georgia, serif; }
+  #header { background: linear-gradient(135deg, #4a3728, #6b4c3b); padding: env(safe-area-inset-top, 44px) 20px 16px; color: white; }
+  #header .label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.6; margin-bottom: 4px; font-family: sans-serif; }
+  #header h1 { font-size: 26px; font-weight: normal; }
+  #header .date { font-size: 13px; opacity: 0.65; margin-top: 4px; font-family: sans-serif; }
+  #legend { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .lpill { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.12); border-radius: 20px; padding: 3px 10px; }
+  .ldot { width: 8px; height: 8px; border-radius: 50%; }
+  .llabel { font-size: 11px; font-family: sans-serif; color: white; opacity: 0.9; }
+  #tabs { display: flex; background: #3a2a1e; overflow-x: auto; }
+  .tab-btn { flex-shrink: 0; padding: 12px 10px; background: transparent; color: rgba(255,255,255,0.5); border: none; font-size: 11px; font-family: sans-serif; font-weight: 400; transition: all 0.2s; white-space: nowrap; }
+  .tab-btn.active { background: #fdf6ec; color: #4a3728; font-weight: 700; border-radius: 6px 6px 0 0; margin: 3px 2px 0; }
+  #content { padding: 16px 14px 60px; max-width: 500px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .card { background: white; border-radius: 14px; padding: 16px; border: 1px solid #f0e0d0; box-shadow: 0 1px 4px rgba(74,55,40,0.08); margin-bottom: 14px; }
+  .day-scroll { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+  .day-btn { padding: 8px 12px; border-radius: 10px; border: 1.5px solid #e8d0bb; background: white; color: #8b6650; font-size: 12px; font-family: sans-serif; font-weight: 600; flex-shrink: 0; }
+  .day-btn.active { background: #4a3728; color: white; border-color: #4a3728; }
+  .progress-bg { height: 6px; background: #e5e7eb; border-radius: 3px; margin-top: 12px; }
+  .progress-fill { height: 6px; border-radius: 3px; transition: width 0.3s; }
+  .tip-box { background: #fef3c7; border-radius: 12px; padding: 14px 16px; border: 1px solid #fde68a; margin-top: 14px; }
+  .tip-label { font-size: 11px; font-family: sans-serif; font-weight: 700; color: #92400e; letter-spacing: 1px; margin-bottom: 6px; }
+  .tip-text { font-size: 13px; color: #78350f; line-height: 1.5; }
+  .routine-section { margin-bottom: 20px; }
+  .sec-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; border-bottom: 1.5px solid #e8d9c8; padding-bottom: 6px; }
+  .routine-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 6px; background: white; border-radius: 10px; border: 1px solid #f0e0d0; box-shadow: 0 1px 3px rgba(74,55,40,0.07); }
+  .routine-item.done { opacity: 0.45; background: rgba(0,0,0,0.03); box-shadow: none; }
+  .chk { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
+  .item-time { font-size: 11px; font-family: sans-serif; color: #8b6650; min-width: 36px; font-weight: 600; }
+  .item-task { font-size: 14px; color: #3a2a1e; flex: 1; }
+  .item-task.done { text-decoration: line-through; color: #aaa; }
+  .who-pill { border-radius: 12px; padding: 2px 8px; font-size: 10px; font-family: sans-serif; font-weight: 600; flex-shrink: 0; }
+  .edit-inline { border: none; outline: none; background: #fdf6ec; border-radius: 6px; padding: 2px 6px; font-size: 13px; color: #3a2a1e; font-family: Georgia, serif; }
+  .edit-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
+  .edit-toggle { background: #4a3728; color: white; border: none; border-radius: 20px; padding: 6px 16px; font-size: 12px; font-family: sans-serif; flex-shrink: 0; }
+  .edit-toggle.on { background: #16a34a; }
+  .add-item-row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-item-input { flex: 1; border: 1.5px solid #e8d0bb; border-radius: 10px; padding: 8px 12px; font-size: 14px; color: #3a2a1e; outline: none; background: #fdf6ec; }
+  .add-item-btn { background: #4a3728; color: white; border: none; border-radius: 10px; padding: 8px 14px; font-size: 13px; font-family: sans-serif; }
+  .del-x { background: none; border: none; color: #f87171; font-size: 18px; padding: 0 4px; flex-shrink: 0; }
+  .add-box { background: white; border-radius: 12px; padding: 14px; margin-bottom: 16px; border: 1px solid #f0e0d0; box-shadow: 0 1px 4px rgba(74,55,40,0.08); }
+  .add-input { width: 100%; border: none; outline: none; font-size: 15px; color: #3a2a1e; background: transparent; margin-bottom: 10px; }
+  .add-controls { display: flex; gap: 8px; align-items: center; }
+  .pri-btn { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-family: sans-serif; font-weight: 600; border: 1.5px solid; background: transparent; }
+  .add-btn { margin-left: auto; background: #4a3728; color: white; border: none; border-radius: 20px; padding: 6px 16px; font-size: 12px; font-family: sans-serif; }
+  .todo-item { display: flex; align-items: center; gap: 10px; padding: 11px 12px; margin-bottom: 6px; background: white; border-radius: 10px; border: 1px solid #f0e0d0; }
+  .todo-item.done { opacity: 0.45; background: rgba(0,0,0,0.03); }
+  .chk-sq { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
+  .todo-text { flex: 1; font-size: 14px; color: #3a2a1e; }
+  .todo-text.done { text-decoration: line-through; color: #aaa; }
+  .del-btn { background: none; border: none; color: #ccc; font-size: 18px; padding: 0 4px; }
+  .clear-btn { width: 100%; background: none; border: 1px dashed #d4b99a; border-radius: 10px; padding: 10px; font-size: 12px; font-family: sans-serif; color: #a08070; margin-top: 4px; }
+  .pri-group { margin-bottom: 16px; }
+  .pri-header { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-family: sans-serif; font-weight: 700; margin-bottom: 8px; padding-left: 4px; }
+  .week-item { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid #f5e8d8; cursor: pointer; }
+  .week-item:last-child { border-bottom: none; }
+  .week-item.done { opacity: 0.45; }
+  .wchk { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; border: 2px solid #c17a4a; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; }
+  .wchk.done { background: #ddd; border-color: #ccc; }
+  .week-task { font-size: 15px; color: #3a2a1e; flex: 1; }
+  .week-task.done { text-decoration: line-through; }
+  .ex-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
+  .ex-item:last-child { border-bottom: none; }
+  .ex-chk { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; border: 2px solid #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
+  .ex-chk.done { background: #7c3aed; }
+  .ex-text { font-size: 14px; color: #3a2a1e; }
+  .ex-text.done { text-decoration: line-through; color: #aaa; }
+  .water-card { background: #eff6ff; border-radius: 14px; padding: 16px; border: 1px solid #bfdbfe; margin-bottom: 14px; }
+  .cup { width: 36px; height: 36px; border-radius: 8px; border: 2px solid #93c5fd; background: transparent; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+  .cup.filled { background: #3b82f6; border-color: #3b82f6; }
+  .cups-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .w-input { flex: 1; border: 1.5px solid #e8d0bb; border-radius: 10px; padding: 8px 12px; font-size: 15px; color: #3a2a1e; outline: none; background: #fdf6ec; }
+  .w-btn { background: #4a3728; color: white; border: none; border-radius: 10px; padding: 8px 16px; font-size: 13px; font-family: sans-serif; }
+  .w-entry { background: #fdf6ec; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-family: sans-serif; color: #6b4c3b; border: 1px solid #e8d0bb; }
+  .study-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(0,0,0,0.06); cursor: pointer; }
+  .study-item:last-child { border-bottom: none; }
+  .s-chk { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; }
+  .s-text { font-size: 14px; color: #3a2a1e; }
+  .s-text.done { text-decoration: line-through; color: #aaa; }
+  ::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="label">FAMILY HQ</div>
+  <h1>Our Day</h1>
+  <div class="date" id="today-date"></div>
+  <div id="legend">
+    <div class="lpill"><div class="ldot" style="background:#f59e0b"></div><span class="llabel">Family</span></div>
+    <div class="lpill"><div class="ldot" style="background:#3b82f6"></div><span class="llabel">8yo</span></div>
+    <div class="lpill"><div class="ldot" style="background:#22c55e"></div><span class="llabel">2yo</span></div>
+    <div class="lpill"><div class="ldot" style="background:#ec4899"></div><span class="llabel">You</span></div>
+  </div>
+</div>
+
+<div id="tabs">
+  <button class="tab-btn active" onclick="switchTab('routine',this)">Routine</button>
+  <button class="tab-btn" onclick="switchTab('todos',this)" id="todo-tab-btn">To-Do</button>
+  <button class="tab-btn" onclick="switchTab('weekly',this)">This Week</button>
+  <button class="tab-btn" onclick="switchTab('fitness',this)">Fitness</button>
+  <button class="tab-btn" onclick="switchTab('study',this)">Study</button>
+</div>
+
+<div id="content">
+
+  <div class="tab-panel active" id="tab-routine">
+    <div class="edit-bar">
+      <span style="font-size:13px;font-family:sans-serif;color:#8b6650">Tap to check off</span>
+      <button class="edit-toggle" id="routine-edit-btn" onclick="toggleEdit('routine')">Edit</button>
+    </div>
+    <div id="routine-content"></div>
+    <button onclick="resetRoutine()" style="display:block;margin:6px auto 0;background:none;border:1px solid #d4b99a;border-radius:20px;padding:6px 18px;font-size:12px;font-family:sans-serif;color:#8b6650">Reset day</button>
+  </div>
+
+  <div class="tab-panel" id="tab-todos">
+    <div class="add-box">
+      <input class="add-input" id="new-todo-input" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTodo()">
+      <div class="add-controls">
+        <button class="pri-btn" id="pri-high" style="border-color:#dc2626;color:#dc2626" onclick="setPri('high')">Urgent</button>
+        <button class="pri-btn" id="pri-med" style="border-color:#d97706;background:#d97706;color:white" onclick="setPri('med')">Normal</button>
+        <button class="pri-btn" id="pri-low" style="border-color:#6b7280;color:#6b7280" onclick="setPri('low')">Someday</button>
+        <button class="add-btn" onclick="addTodo()">+ Add</button>
+      </div>
+    </div>
+    <div id="todo-list"></div>
+  </div>
+
+  <div class="tab-panel" id="tab-weekly">
+    <div class="edit-bar">
+      <div class="day-scroll" id="week-days" style="margin-bottom:0;flex:1"></div>
+      <button class="edit-toggle" id="weekly-edit-btn" onclick="toggleEdit('weekly')">Edit</button>
+    </div>
+    <div class="card" id="week-card"></div>
+    <div class="tip-box">
+      <div class="tip-label">TIP OF THE WEEK</div>
+      <div class="tip-text">During your 2yo nap, tackle just one meaningful task first. That win carries the whole day!</div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-fitness">
+    <div class="day-scroll" id="fit-days"></div>
+    <div id="fit-card"></div>
+    <div class="water-card">
+      <div style="font-size:13px;font-family:sans-serif;font-weight:700;color:#1e40af">Water Today (8 glasses)</div>
+      <div class="cups-row" id="water-cups"></div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-family:sans-serif;font-weight:700;color:#4a3728;margin-bottom:10px">Weight Log</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input class="w-input" id="w-input" type="number" placeholder="e.g. 65 kg" onkeydown="if(event.key==='Enter')logWeight()">
+        <button class="w-btn" onclick="logWeight()">Log</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="w-entries"></div>
+    </div>
+    <div style="background:#f0fdf4;border-radius:12px;padding:14px;border:1px solid #bbf7d0">
+      <div style="font-size:11px;font-family:sans-serif;font-weight:700;color:#166534;letter-spacing:1px;margin-bottom:6px">NUTRITION TIP</div>
+      <div style="font-size:13px;color:#14532d;line-height:1.5" id="nutrition-tip"></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-study">
+    <div class="edit-bar">
+      <div class="day-scroll" id="study-days" style="margin-bottom:0;flex:1"></div>
+      <button class="edit-toggle" id="study-edit-btn" onclick="toggleEdit('study')">Edit</button>
+    </div>
+    <div id="study-card"></div>
+  </div>
+
+</div>
+
+<script>
+var DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+var whoStyle = {
+  "family":{bg:"#fef3c7",text:"#92400e",dot:"#f59e0b"},
+  "8yo":{bg:"#dbeafe",text:"#1e40af",dot:"#3b82f6"},
+  "2yo":{bg:"#dcfce7",text:"#166534",dot:"#22c55e"},
+  "you":{bg:"#fce7f3",text:"#9d174d",dot:"#ec4899"}
+};
+
+var secEmoji = {morning:"🌤",midday:"☀️",evening:"🌙"};
+
+var typeColors = {
+  strength:{bg:"#ede9fe",text:"#5b21b6",dot:"#7c3aed",border:"#c4b5fd"},
+  cardio:{bg:"#dcfce7",text:"#166534",dot:"#16a34a",border:"#86efac"},
+  rest:{bg:"#f1f5f9",text:"#475569",dot:"#94a3b8",border:"#cbd5e1"}
+};
+
+var nutritionTips = [
+  "Eat protein at every meal to stay full through toddler chaos.",
+  "Prep snacks on Sunday so you grab those instead of kids leftovers.",
+  "A big salad or veggie soup for lunch fuels afternoon energy.",
+  "Avoid snacking after 8yo bedtime - that is the sneaky one.",
+  "Drink a full glass of water before each meal."
+];
+
+function load(key, def) {
+  try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e) { return def; }
+}
+function save(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+
+var defaultRoutine = {
+  morning:[
+    {time:"6:00",task:"Early workout (before kids up)",who:"you"},
+    {time:"7:00",task:"Wake up and get dressed",who:"family"},
+    {time:"7:30",task:"Breakfast",who:"family"},
+    {time:"8:00",task:"School drop-off prep",who:"8yo"},
+    {time:"8:30",task:"Toddler free play",who:"2yo"},
+    {time:"9:00",task:"Morning activity or errands",who:"2yo"}
+  ],
+  midday:[
+    {time:"11:30",task:"Toddler lunch",who:"2yo"},
+    {time:"12:00",task:"Toddler nap",who:"2yo"},
+    {time:"12:30",task:"Your lunch and recharge",who:"you"},
+    {time:"1:00",task:"Tasks during nap",who:"you"},
+    {time:"3:00",task:"School pick-up",who:"8yo"},
+    {time:"3:30",task:"Snack and homework time",who:"8yo"}
+  ],
+  evening:[
+    {time:"5:00",task:"Dinner prep",who:"you"},
+    {time:"5:30",task:"Family dinner",who:"family"},
+    {time:"6:30",task:"Toddler bath and bed routine",who:"2yo"},
+    {time:"7:00",task:"8yo reading and wind down",who:"8yo"},
+    {time:"7:30",task:"8yo bedtime",who:"8yo"},
+    {time:"8:00",task:"Your evening",who:"you"}
+  ]
+};
+
+var defaultWeekly = {
+  Mon:["Grocery run","Laundry","Tuition classes 4:00pm"],
+  Tue:["Library or playgroup"],
+  Wed:["Meal prep","8yo activity","Tuition classes 4:00pm"],
+  Thu:["Cleaning"],
+  Fri:["Fun outing","Weekly reset"],
+  Sat:["Family time"],
+  Sun:["Plan next week","Meal prep"]
+};
+
+var defaultWorkouts = {
+  Mon:{type:"strength",label:"Full Body Strength",duration:"30 min",loc:"Home",ex:["Squats 15 x3","Push-ups 10 x3","Lunges 12 x3","Plank 30s x3","Glute bridges 15 x3"]},
+  Tue:{type:"cardio",label:"Brisk Walk or Run",duration:"30 min",loc:"Outdoor",ex:["5 min warm-up walk","20 min brisk walk or jog","5 min cool-down walk"]},
+  Wed:{type:"strength",label:"Core and Arms",duration:"25 min",loc:"Home",ex:["Bicycle crunches x3","Tricep dips 10 x3","Dead bugs 10 x3","Shoulder taps x3","Superman hold x3"]},
+  Thu:{type:"rest",label:"Active Rest",duration:"20 min",loc:"Outdoor",ex:["Gentle walk with toddler","Stretch or yoga","Light movement only"]},
+  Fri:{type:"cardio",label:"Run or Walk-Run",duration:"35 min",loc:"Outdoor",ex:["5 min warm-up","25 min run or walk-run","5 min stretch"]},
+  Sat:{type:"strength",label:"Lower Body Burn",duration:"30 min",loc:"Home",ex:["Squats 20 x3","Reverse lunges 15 x3","Wall sit 45s x3","Donkey kicks x3","Jump squats x2"]},
+  Sun:{type:"rest",label:"Full Rest",duration:"Rest day",loc:"Recovery",ex:["Rest and recover","Light stretching if desired","Prep for the week ahead"]}
+};
+
+var defaultStudy = {
+  Mon:{subject:"Italiano - Lettura",color:{bg:"#fef9ec",border:"#fde68a",text:"#92400e",dot:"#f59e0b"},topic:"Lettura ad alta voce",time:"20 min",activities:["Read an Italian book aloud together","Look up any word she does not know","Re-read for fluency and confidence","Ask: Chi? Cosa? Dove? Quando?"],resource:{label:"Dinolingo Italian for Kids",url:"https://dinolingo.com/learn-italian-for-kids/"}},
+  Tue:{subject:"Matematica in Italiano",color:{bg:"#eff6ff",border:"#bfdbfe",text:"#1e40af",dot:"#3b82f6"},topic:"Numeri e Problemi",time:"20 min",activities:["Calculate in Italian: piu, meno, fa","Say maths aloud in Italian","Solve 3 word problems in Italian","Write answers in Italian words"],resource:{label:"Khan Kids - Numbers",url:"https://www.khanacademy.org/kids"}},
+  Wed:{subject:"Italiano - Grammatica",color:{bg:"#fce7f3",border:"#fbcfe8",text:"#9d174d",dot:"#ec4899"},topic:"Articoli, Nomi e Aggettivi",time:"20 min",activities:["Practise il, la, i, le and un, una","Find 5 nouns and 5 adjectives in a book","Write 3 sentences in Italian","Correct an Italian paragraph together"],resource:{label:"Online Italian Club - Free",url:"https://onlineitalianclub.com/free-italian-exercises-and-resources/online-italian-course-beginner-level-a1/"}},
+  Thu:{subject:"Scienze in Italiano",color:{bg:"#f0fdf4",border:"#bbf7d0",text:"#166534",dot:"#22c55e"},topic:"Materia: Solidi, Liquidi e Gas",time:"20 min",activities:["Name examples: solido, liquido, gas","Experiment: ghiaccio - acqua - vapore","Draw and label the 3 states in Italian","Write 2 sentences in Italian"],resource:{label:"Science Kids",url:"https://www.sciencekids.co.nz/"}},
+  Fri:{subject:"Italiano - Scrittura",color:{bg:"#ede9fe",border:"#c4b5fd",text:"#5b21b6",dot:"#7c3aed"},topic:"Scrittura libera",time:"20 min",activities:["Write 4-5 sentences about her week in Italian","Focus on verbs and connecting words","Read it aloud after writing","Decorate with drawings for the Italian words"],resource:{label:"Dinolingo Italian for Kids",url:"https://dinolingo.com/learn-italian-for-kids/"}},
+  Sat:{subject:"Italiano - Vocabolario",color:{bg:"#fef9ec",border:"#fde68a",text:"#92400e",dot:"#f59e0b"},topic:"Vocabolario tematico",time:"15 min",activities:["Theme: La famiglia, la casa, il cibo","Make flashcards: Italian word and drawing","Say the word, she points to the picture","Use 5 new words in sentences aloud"],resource:{label:"Language Together Italian",url:"https://languagetogether.com/products/italian-for-kids-set-1"}},
+  Sun:{subject:"Matematica e Ripasso",color:{bg:"#eff6ff",border:"#bfdbfe",text:"#1e40af",dot:"#3b82f6"},topic:"Ripasso della settimana",time:"25 min",activities:["Review Italian vocabulary with flashcards","Solve 3 maths problems in Italian","Re-read Monday Italian passage","Ask: cosa hai imparato questa settimana?"],resource:{label:"Online Italian Club - Free",url:"https://onlineitalianclub.com/free-italian-exercises-and-resources/online-italian-course-beginner-level-a1/"}}
+};
+
+var routine = load("fhq_routine", defaultRoutine);
+var weeklyTasks = load("fhq_weekly", defaultWeekly);
+var workouts = load("fhq_workouts", defaultWorkouts);
+var studySchedule = load("fhq_study", defaultStudy);
+var todos = load("fhq_todos", [
+  {id:1,text:"Book 2yo check-up",done:false,pri:"high"},
+  {id:2,text:"Sign 8yo permission slip",done:false,pri:"high"},
+  {id:3,text:"Order school supplies",done:false,pri:"med"},
+  {id:4,text:"Schedule playdate",done:false,pri:"low"},
+  {id:5,text:"Restock diapers and wipes",done:false,pri:"med"}
+]);
+
+var checkedRoutine = {};
+var checkedWeekly = {};
+var checkedExercises = {};
+var checkedStudy = {};
+var newPri = "med";
+var todayIdx = new Date().getDay();
+var todayStr = DAYS[todayIdx === 0 ? 6 : todayIdx - 1];
+var activeWeekDay = todayStr;
+var activeFitDay = todayStr;
+var activeStudyDay = todayStr;
+var water = 0;
+var weightLog = load("fhq_weight", []);
+var editMode = {routine:false, weekly:false, study:false};
+
+document.getElementById("today-date").textContent =
+  new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+document.getElementById("nutrition-tip").textContent =
+  nutritionTips[Math.floor(Math.random()*nutritionTips.length)];
+
+renderAll();
+
+function renderAll() {
+  renderRoutine();
+  renderTodos();
+  renderWeekly();
+  renderFitness();
+  renderStudy();
+  renderWater();
+  renderWeightLog();
+}
+
+function renderRoutine() {
+  var editing = editMode.routine;
+  document.getElementById("routine-edit-btn").textContent = editing ? "Done" : "Edit";
+  document.getElementById("routine-edit-btn").className = "edit-toggle" + (editing ? " on" : "");
+  var html = "";
+  var sections = ["morning","midday","evening"];
+  var secLabel = {morning:"Morning",midday:"Midday",evening:"Evening"};
+  for (var s = 0; s < sections.length; s++) {
+    var sec = sections[s];
+    var items = routine[sec];
+    html += '<div class="routine-section"><div class="sec-header"><span style="font-size:18px">' + secEmoji[sec] + '</span><span style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#8b6650;font-family:sans-serif;font-weight:600">' + secLabel[sec] + '</span></div>';
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var key = sec + i;
+      var done = checkedRoutine[key];
+      var c = whoStyle[item.who] || whoStyle["you"];
+      if (editing) {
+        html += '<div class="routine-item"><input class="edit-inline" value="' + item.time + '" onchange="editRT(\'' + sec + '\',' + i + ',this.value)" style="width:45px"><input class="edit-inline" value="' + item.task + '" onchange="editRK(\'' + sec + '\',' + i + ',this.value)" style="flex:1;margin:0 4px"><span class="who-pill" style="background:' + c.bg + ';color:' + c.text + '">' + item.who + '</span><button class="del-x" onclick="delRI(\'' + sec + '\',' + i + ')">x</button></div>';
+      } else {
+        html += '<div class="routine-item' + (done ? " done" : "") + '" onclick="toggleRoutine(\'' + key + '\')"><div class="chk" style="border-color:' + (done ? "#ccc" : c.dot) + ';background:' + (done ? c.dot : "transparent") + '">' + (done ? "✓" : "") + '</div><span class="item-time">' + item.time + '</span><span class="item-task' + (done ? " done" : "") + '">' + item.task + '</span><span class="who-pill" style="background:' + c.bg + ';color:' + c.text + '">' + item.who + '</span></div>';
+      }
+    }
+    if (editing) {
+      html += '<div class="add-item-row"><input class="add-item-input" id="nrt-' + sec + '" placeholder="Time" style="width:60px;flex:none"><input class="add-item-input" id="nrk-' + sec + '" placeholder="New task..."><button class="add-item-btn" onclick="addRI(\'' + sec + '\')">+</button></div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById("routine-content").innerHTML = html;
+}
+
+function renderTodos() {
+  var priColors = {high:"#dc2626",med:"#d97706",low:"#6b7280"};
+  var priLabels = {high:"Urgent",med:"Normal",low:"Someday"};
+  var priEmoji = {high:"🔴",med:"🟡",low:"⚪"};
+  var html = "";
+  var pris = ["high","med","low"];
+  for (var p = 0; p < pris.length; p++) {
+    var pri = pris[p];
+    var items = todos.filter(function(t){ return t.pri === pri; });
+    if (!items.length) continue;
+    html += '<div class="pri-group"><div class="pri-header" style="color:' + priColors[pri] + '">' + priEmoji[pri] + ' ' + priLabels[pri] + '</div>';
+    for (var i = 0; i < items.length; i++) {
+      var t = items[i];
+      html += '<div class="todo-item' + (t.done ? " done" : "") + '"><div class="chk-sq" style="border-color:' + (t.done ? "#ccc" : priColors[pri]) + ';background:' + (t.done ? "#ddd" : "transparent") + '" onclick="toggleTodo(' + t.id + ')">' + (t.done ? "✓" : "") + '</div><span class="todo-text' + (t.done ? " done" : "") + '">' + t.text + '</span><button class="del-btn" onclick="delTodo(' + t.id + ')">x</button></div>';
+    }
+    html += '</div>';
+  }
+  if (todos.some(function(t){ return t.done; })) {
+    html += '<button class="clear-btn" onclick="clearDone()">Clear completed</button>';
+  }
+  document.getElementById("todo-list").innerHTML = html;
+  var n = todos.filter(function(t){ return !t.done; }).length;
+  document.getElementById("todo-tab-btn").textContent = n ? "To-Do (" + n + ")" : "To-Do";
+}
+
+function renderWeekly() {
+  var editing = editMode.weekly;
+  document.getElementById("weekly-edit-btn").textContent = editing ? "Done" : "Edit";
+  document.getElementById("weekly-edit-btn").className = "edit-toggle" + (editing ? " on" : "");
+  var dayHtml = "";
+  for (var i = 0; i < DAYS.length; i++) {
+    dayHtml += '<button class="day-btn' + (DAYS[i] === activeWeekDay ? " active" : "") + '" onclick="setWeekDay(\'' + DAYS[i] + '\')">' + DAYS[i] + '</button>';
+  }
+  document.getElementById("week-days").innerHTML = dayHtml;
+  var tasks = weeklyTasks[activeWeekDay] || [];
+  var emoji = (activeWeekDay === "Sat" || activeWeekDay === "Sun") ? "🏡" : "📅";
+  var html = '<div style="font-size:16px;font-weight:600;color:#4a3728;margin-bottom:14px">' + emoji + ' ' + activeWeekDay + '</div>';
+  for (var j = 0; j < tasks.length; j++) {
+    var task = tasks[j];
+    var key = activeWeekDay + j;
+    var done = checkedWeekly[key];
+    if (editing) {
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f5e8d8"><input class="add-item-input" value="' + task + '" onchange="editWT(' + j + ',this.value)" style="flex:1;padding:6px 10px"><button class="del-x" onclick="delWT(' + j + ')">x</button></div>';
+    } else {
+      html += '<div class="week-item' + (done ? " done" : "") + '" onclick="toggleWeekly(\'' + key + '\')"><div class="wchk' + (done ? " done" : "") + '">' + (done ? "✓" : "") + '</div><span class="week-task' + (done ? " done" : "") + '">' + task + '</span></div>';
+    }
+  }
+  if (editing) {
+    html += '<div class="add-item-row" style="margin-top:10px"><input class="add-item-input" id="new-week-task" placeholder="Add task for ' + activeWeekDay + '..."><button class="add-item-btn" onclick="addWT()">+</button></div>';
+  }
+  if (!tasks.length && !editing) {
+    html += '<div style="color:#bbb;font-family:sans-serif;font-size:13px;text-align:center;padding:20px 0">Free day - enjoy it!</div>';
+  }
+  document.getElementById("week-card").innerHTML = html;
+}
+
+function renderFitness() {
+  var dayHtml = "";
+  for (var i = 0; i < DAYS.length; i++) {
+    dayHtml += '<button class="day-btn' + (DAYS[i] === activeFitDay ? " active" : "") + '" onclick="setFitDay(\'' + DAYS[i] + '\')">' + DAYS[i] + '</button>';
+  }
+  document.getElementById("fit-days").innerHTML = dayHtml;
+  var w = workouts[activeFitDay];
+  var c = typeColors[w.type];
+  var total = w.ex.length;
+  var done = 0;
+  for (var i = 0; i < w.ex.length; i++) { if (checkedExercises[activeFitDay + i]) done++; }
+  var pct = total ? Math.round(done / total * 100) : 0;
+  var html = '<div style="background:' + c.bg + ';border:1px solid ' + c.border + ';border-radius:14px;padding:18px;margin-bottom:14px"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:sans-serif;font-weight:700;color:' + c.text + ';margin-bottom:6px">' + w.type.toUpperCase() + ' - ' + w.loc + '</div><div style="font-size:19px;color:#3a2a1e;margin-bottom:4px">' + w.label + '</div><div style="font-size:12px;font-family:sans-serif;color:#8b6650;margin-bottom:14px">' + w.duration + ' - ' + done + '/' + total + ' done</div>';
+  for (var i = 0; i < w.ex.length; i++) {
+    var key = activeFitDay + i;
+    var exDone = checkedExercises[key];
+    html += '<div class="ex-item" onclick="toggleEx(\'' + key + '\')"><div class="ex-chk' + (exDone ? " done" : "") + '" style="border-color:' + c.dot + '">' + (exDone ? "✓" : "") + '</div><span class="ex-text' + (exDone ? " done" : "") + '">' + w.ex[i] + '</span></div>';
+  }
+  html += '<div class="progress-bg"><div class="progress-fill" style="width:' + pct + '%;background:' + c.dot + '"></div></div></div>';
+  document.getElementById("fit-card").innerHTML = html;
+}
+
+function renderStudy() {
+  var editing = editMode.study;
+  document.getElementById("study-edit-btn").textContent = editing ? "Done" : "Edit";
+  document.getElementById("study-edit-btn").className = "edit-toggle" + (editing ? " on" : "");
+  var dayHtml = "";
+  for (var i = 0; i < DAYS.length; i++) {
+    dayHtml += '<button class="day-btn' + (DAYS[i] === activeStudyDay ? " active" : "") + '" onclick="setStudyDay(\'' + DAYS[i] + '\')">' + DAYS[i] + '</button>';
+  }
+  document.getElementById("study-days").innerHTML = dayHtml;
+  var s = studySchedule[activeStudyDay];
+  var total = s.activities.length;
+  var done = 0;
+  for (var i = 0; i < s.activities.length; i++) { if (checkedStudy[activeStudyDay + i]) done++; }
+  var pct = Math.round(done / total * 100);
+  var html = '<div style="background:' + s.color.bg + ';border:1px solid ' + s.color.border + ';border-radius:14px;padding:18px;margin-bottom:14px"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:sans-serif;font-weight:700;color:' + s.color.text + ';margin-bottom:6px">' + s.subject + ' - ' + s.time + '</div>';
+  if (editing) {
+    html += '<input class="edit-inline" value="' + s.topic + '" onchange="editST(this.value)" style="font-size:17px;margin-bottom:12px;width:100%">';
+  } else {
+    html += '<div style="font-size:19px;color:#3a2a1e;margin-bottom:12px">' + s.topic + '</div>';
+  }
+  for (var i = 0; i < s.activities.length; i++) {
+    var key = activeStudyDay + i;
+    var isDone = checkedStudy[key];
+    if (editing) {
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.06)"><input class="edit-inline" value="' + s.activities[i] + '" onchange="editSA(' + i + ',this.value)" style="flex:1"><button class="del-x" onclick="delSA(' + i + ')">x</button></div>';
+    } else {
+      html += '<div class="study-item" onclick="toggleStudy(\'' + key + '\')"><div class="s-chk" style="border-color:' + (isDone ? "#ccc" : s.color.dot) + ';background:' + (isDone ? s.color.dot : "transparent") + '">' + (isDone ? "✓" : "") + '</div><span class="s-text' + (isDone ? " done" : "") + '">' + s.activities[i] + '</span></div>';
+    }
+  }
+  if (editing) {
+    html += '<div class="add-item-row" style="margin-top:10px"><input class="add-item-input" id="new-study-act" placeholder="New activity..."><button class="add-item-btn" onclick="addSA()">+</button></div>';
+  }
+  html += '<div class="progress-bg"><div class="progress-fill" style="width:' + pct + '%;background:' + s.color.dot + '"></div></div><div style="font-size:11px;font-family:sans-serif;color:' + s.color.text + ';margin-top:6px">' + done + '/' + total + ' done</div></div>';
+  html += '<a href="' + s.resource.url + '" target="_blank" style="display:block;background:white;border:1px solid ' + s.color.border + ';border-radius:12px;padding:13px 16px;text-decoration:none;margin-bottom:14px"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;font-family:sans-serif;color:#8b6650;margin-bottom:3px">FREE RESOURCE</div><div style="font-size:14px;color:' + s.color.text + ';font-weight:600">' + s.resource.label + '</div></a>';
+  html += '<div class="tip-box"><div class="tip-label">REVISION TIP</div><div class="tip-text">Keep sessions 15-25 mins. Tick off each activity together. No English during Italian practice!</div></div>';
+  document.getElementById("study-card").innerHTML = html;
+}
+
+function renderWater() {
+  var html = "";
+  for (var i = 0; i < 8; i++) {
+    html += '<div class="cup' + (i < water ? " filled" : "") + '" onclick="tapWater(' + i + ')">💧</div>';
+  }
+  document.getElementById("water-cups").innerHTML = html;
+}
+
+function renderWeightLog() {
+  var el = document.getElementById("w-entries");
+  if (!weightLog.length) { el.innerHTML = '<span style="font-size:12px;font-family:sans-serif;color:#bbb">No entries yet</span>'; return; }
+  el.innerHTML = weightLog.map(function(e){ return '<div class="w-entry">' + e.date + '<br><b>' + e.w + '</b></div>'; }).join("");
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll(".tab-panel").forEach(function(p){ p.classList.remove("active"); });
+  document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("active"); });
+  document.getElementById("tab-" + tab).classList.add("active");
+  btn.classList.add("active");
+}
+
+function toggleEdit(section) {
+  editMode[section] = !editMode[section];
+  if (section === "routine") renderRoutine();
+  else if (section === "weekly") renderWeekly();
+  else if (section === "study") renderStudy();
+}
+
+function toggleRoutine(key) { checkedRoutine[key] = !checkedRoutine[key]; renderRoutine(); }
+function resetRoutine() { checkedRoutine = {}; renderRoutine(); }
+function editRT(sec, i, val) { routine[sec][i].time = val; save("fhq_routine", routine); }
+function editRK(sec, i, val) { routine[sec][i].task = val; save("fhq_routine", routine); }
+function delRI(sec, i) { routine[sec].splice(i, 1); save("fhq_routine", routine); renderRoutine(); }
+function addRI(sec) {
+  var t = document.getElementById("nrt-" + sec).value.trim();
+  var task = document.getElementById("nrk-" + sec).value.trim();
+  if (!task) return;
+  routine[sec].push({time: t || "", task: task, who: "you"});
+  save("fhq_routine", routine); renderRoutine();
+}
+
+function setPri(p) {
+  newPri = p;
+  var c = {high:"#dc2626",med:"#d97706",low:"#6b7280"};
+  ["high","med","low"].forEach(function(x) {
+    var b = document.getElementById("pri-" + x);
+    b.style.background = x === p ? c[x] : "transparent";
+    b.style.color = x === p ? "white" : c[x];
+    b.style.borderColor = c[x];
+  });
+}
+function addTodo() {
+  var inp = document.getElementById("new-todo-input");
+  var text = inp.value.trim(); if (!text) return;
+  todos.push({id: Date.now(), text: text, done: false, pri: newPri});
+  inp.value = ""; save("fhq_todos", todos); renderTodos();
+}
+function toggleTodo(id) { todos = todos.map(function(t){ return t.id === id ? {id:t.id,text:t.text,done:!t.done,pri:t.pri} : t; }); save("fhq_todos", todos); renderTodos(); }
+function delTodo(id) { todos = todos.filter(function(t){ return t.id !== id; }); save("fhq_todos", todos); renderTodos(); }
+function clearDone() { todos = todos.filter(function(t){ return !t.done; }); save("fhq_todos", todos); renderTodos(); }
+
+function setWeekDay(d) { activeWeekDay = d; renderWeekly(); }
+function toggleWeekly(key) { checkedWeekly[key] = !checkedWeekly[key]; renderWeekly(); }
+function editWT(i, val) { weeklyTasks[activeWeekDay][i] = val; save("fhq_weekly", weeklyTasks); }
+function delWT(i) { weeklyTasks[activeWeekDay].splice(i, 1); save("fhq_weekly", weeklyTasks); renderWeekly(); }
+function addWT() {
+  var inp = document.getElementById("new-week-task");
+  var val = inp.value.trim(); if (!val) return;
+  if (!weeklyTasks[activeWeekDay]) weeklyTasks[activeWeekDay] = [];
+  weeklyTasks[activeWeekDay].push(val);
+  save("fhq_weekly", weeklyTasks); renderWeekly();
+}
+
+function setFitDay(d) { activeFitDay = d; renderFitness(); }
+function toggleEx(key) { checkedExercises[key] = !checkedExercises[key]; renderFitness(); }
+function tapWater(i) { water = (i < water) ? i : i + 1; renderWater(); }
+function logWeight() {
+  var val = parseFloat(document.getElementById("w-input").value); if (!val) return;
+  weightLog = weightLog.slice(-6);
+  weightLog.push({date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}), w: val});
+  document.getElementById("w-input").value = ""; save("fhq_weight", weightLog); renderWeightLog();
+}
+
+function setStudyDay(d) { activeStudyDay = d; renderStudy(); }
+function toggleStudy(key) { checkedStudy[key] = !checkedStudy[key]; renderStudy(); }
+function editST(val) { studySchedule[activeStudyDay].topic = val; save("fhq_study", studySchedule); }
+function editSA(i, val) { studySchedule[activeStudyDay].activities[i] = val; save("fhq_study", studySchedule); }
+function delSA(i) { studySchedule[activeStudyDay].activities.splice(i, 1); save("fhq_study", studySchedule); renderStudy(); }
+function addSA() {
+  var inp = document.getElementById("new-study-act");
+  var val = inp.value.trim(); if (!val) return;
+  studySchedule[activeStudyDay].activities.push(val);
+  save("fhq_study", studySchedule); renderStudy();
+}
+</script>
+</body>
+</html>
